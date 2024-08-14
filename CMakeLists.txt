@@ -17,7 +17,7 @@ project ("AudioGawd")
 find_package(portaudio CONFIG REQUIRED)
 find_package(opus CONFIG REQUIRED)
 # Add source to this project's executable.
-add_executable (AudioGawd "AudioGawd.cpp" "constants.h")
+add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h")
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET AudioGawd PROPERTY CXX_STANDARD 20)
 endif()
