@@ -1,0 +1,8 @@
+{
+  "name": "audio-gawd",
+  "version": "1.0.0",
+  "dependencies": [
+    "opus",
+    "portaudio"
+  ]
+}
