@@ -1,5 +1,6 @@
 #pragma once
 #include "sharedmemory.h"
+#include "server.h"
 #include "helpers.h"
 #include "constants.h"
 #include <opus/opus.h>
@@ -8,7 +9,7 @@
 
 class Recorder {
 public:
-	Recorder(SharedMemory* sm, int channels = 1, int bitrate = 156000) :encoder(opus_encoder_create(constants::SAMPLERATE, channels, OPUS_APPLICATION_VOIP, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_sm(sm) {
+	Recorder(Server* server, int channels = 1, int bitrate = 156000) :encoder(opus_encoder_create(constants::SAMPLERATE, channels, OPUS_APPLICATION_VOIP, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_server(server) {
 		if (opusError != OPUS_OK) {
 			std::cout << "OPUS ERROR CODE: " << opusError << "\n";
 			exit(EXIT_FAILURE);
@@ -60,5 +61,5 @@ private:
 	int channel_c{};
 	int opusError{};
 
-	SharedMemory* m_sm{ nullptr };
+	Server* m_server{ nullptr };
 };

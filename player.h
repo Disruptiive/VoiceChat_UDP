@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include "client.h"
 #include "constants.h"
 #include "helpers.h"
 #include "sharedmemory.h"
@@ -8,7 +9,7 @@
 
 class Player {
 public:
-	Player(SharedMemory* sm, int channels = 1, int gain = 0) :decoder(opus_decoder_create(constants::SAMPLERATE, channels, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_sm(sm) {
+	Player(Client* client, int channels = 1, int gain = 0) :decoder(opus_decoder_create(constants::SAMPLERATE, channels, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_client(client) {
 		if (opusError != OPUS_OK) {
 			std::cout << "OPUS ERROR CODE: " << opusError << "\n";
 			exit(EXIT_FAILURE);
@@ -60,5 +61,5 @@ private:
 	int channel_c{};
 	int opusError{};
 
-	SharedMemory* m_sm{ nullptr };
+	Client* m_client{ nullptr };
 };

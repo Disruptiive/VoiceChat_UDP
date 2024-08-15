@@ -1,4 +1,7 @@
 #include <iostream>
+#include <boost/asio.hpp>
+#include "server.h"
+#include "client.h"
 #include <portaudio.h>
 #include <opus/opus.h>
 #include "constants.h"
@@ -9,8 +12,8 @@
 #include <mutex>
 
 
-void recorder(SharedMemory* sm) {
-    auto rec{ Recorder(sm,1) };
+void recorder(Server* server) {
+    auto rec{ Recorder(server,1,constants::BITRATE) };
 
     rec.initializeStream();
     rec.startStream();
@@ -20,8 +23,8 @@ void recorder(SharedMemory* sm) {
     rec.closeStream();
 }
 
-void receiver(SharedMemory* sm) {
-    auto plr{ Player(sm,1) };
+void receiver(Client* client) {
+    auto plr{ Player(client,1) };
 
     plr.initializeStream();
     plr.startStream();
@@ -34,17 +37,34 @@ void receiver(SharedMemory* sm) {
 
 int main() {
     PaError err = paNoError;
+    boost::asio::io_context io_context;
 
     err = Pa_Initialize();
     helpers::checkError(err);
 
-    auto sm{ SharedMemory() };
+    auto client{ Client(io_context) };
 
-    std::thread t(receiver,&sm);
+    auto server{ Server(io_context) };
     
-    recorder(&sm);
-    sm.set_done();
+
+   
+
+    
+    std::thread io_thread([&io_context]() {
+        try {
+            io_context.run();
+        }
+        catch (std::exception& e) {
+            std::cout << e.what() << "\n";
+        }
+        
+    });
+
+    std::thread t(receiver,&client);
+    
+    recorder(&server);
     t.join();
+    io_thread.join();
     
     err = Pa_Terminate();
     helpers::checkError(err);

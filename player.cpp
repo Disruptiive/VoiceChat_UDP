@@ -12,7 +12,7 @@ int Player::paPlayCallBack(
     Player* plr = (Player*)userData;
     float* out = (float*)outputBuffer;
 
-    int bytes = plr->m_sm->read(plr->data);
+    int bytes = plr->m_client->getData(plr->data);
     opus_decode_float(plr->decoder, plr->data, bytes, out, constants::FRAMES_PER_BUFFER, 0);
 
 
@@ -62,8 +62,8 @@ Player::Player(Player&& other) noexcept {
     channel_c = other.channel_c;
     bytes_per_frame = other.bytes_per_frame;
 
-    m_sm = other.m_sm;
-    other.m_sm = nullptr;
+    m_client = other.m_client;
+    other.m_client = nullptr;
 }
 
 Player& Player::operator=(Player&& other) noexcept {
@@ -84,8 +84,8 @@ Player& Player::operator=(Player&& other) noexcept {
         channel_c = other.channel_c;
         bytes_per_frame = other.bytes_per_frame;
 
-        m_sm = other.m_sm;
-        other.m_sm = nullptr;
+        m_client = other.m_client;
+        other.m_client = nullptr;
     }
     return *this;
 }

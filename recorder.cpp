@@ -18,7 +18,7 @@ int Recorder::paRecordCallBack(
     }
     else {
         //std::cout << ec << " bytes transferred" << "\n";
-        rec->m_sm->write(rec->data, ec);
+        rec->m_server->send_message(ec, rec->data);
     }
     return 0;
 }
@@ -66,8 +66,8 @@ Recorder::Recorder(Recorder&& other) noexcept{
     channel_c = other.channel_c;
     bytes_per_frame = other.bytes_per_frame;
 
-    m_sm = other.m_sm;
-    other.m_sm = nullptr;
+    m_server = other.m_server;
+    other.m_server = nullptr;
 }
 
 Recorder& Recorder::operator=(Recorder&& other) noexcept {
@@ -88,8 +88,8 @@ Recorder& Recorder::operator=(Recorder&& other) noexcept {
         channel_c = other.channel_c;
         bytes_per_frame = other.bytes_per_frame;
 
-        m_sm = other.m_sm;
-        other.m_sm = nullptr;
+        m_server = other.m_server;
+        other.m_server = nullptr;
     }
     return *this;
 }

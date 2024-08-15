@@ -1,7 +1,4 @@
-﻿# CMakeList.txt : CMake project for AudioGawd, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -10,14 +7,17 @@ if (POLICY CMP0141)
 endif()
 
 
-set(portaudio_DIR "C:/Users/Antonis/source/AudioGawd/AudioGawd/vcpkg_installed/x64-windows/share/portaudio")
-set(opus_DIR "C:/Users/Antonis/source/AudioGawd/AudioGawd/vcpkg_installed/x64-windows/share/opus")
+set(portaudio_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/portaudio")
+set(opus_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/opus")
+set(Boost_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/include")
+set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share")
 
-project ("AudioGawd")
+project ("UDP Voice Chat")
 find_package(portaudio CONFIG REQUIRED)
 find_package(opus CONFIG REQUIRED)
-# Add source to this project's executable.
-add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h")
+find_package(Boost REQUIRED)
+
+add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h" "client.h" "client.cpp" "server.h")
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET AudioGawd PROPERTY CXX_STANDARD 20)
 endif()
@@ -26,4 +26,5 @@ target_link_libraries(AudioGawd PRIVATE portaudio)
 target_link_libraries(AudioGawd PRIVATE ${CMAKE_SOURCE_DIR}/build/vcpkg_installed/x64-windows/lib/opus.lib)
 
 
-# TODO: Add tests and install targets if needed.
+
+
