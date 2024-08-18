@@ -11,13 +11,16 @@ set(portaudio_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/portaud
 set(opus_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/opus")
 set(Boost_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/include")
 set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share")
+include_directories(${Boost_INCLUDE_DIR})
 
 project ("UDP Voice Chat")
 find_package(portaudio CONFIG REQUIRED)
 find_package(opus CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 
-add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h" "client.h" "client.cpp" "server.h")
+add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h" "client.h" "client.cpp" "server.h" "RingBuffer.h")
+add_executable (ServerTest "servertest.cpp" "server.h")
+
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET AudioGawd PROPERTY CXX_STANDARD 20)
 endif()

@@ -9,7 +9,7 @@
 
 class Player {
 public:
-	Player(Client* client, int channels = 1, int gain = 0) :decoder(opus_decoder_create(constants::SAMPLERATE, channels, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_client(client) {
+	Player(ClientReceiver* client, int channels = 1, int gain = 0) :decoder(opus_decoder_create(constants::SAMPLERATE, channels, &opusError)), stream(nullptr), data(new unsigned char[constants::MAX_PACKET_SIZE]), channel_c(channels), m_client(client) {
 		if (opusError != OPUS_OK) {
 			std::cout << "OPUS ERROR CODE: " << opusError << "\n";
 			exit(EXIT_FAILURE);
@@ -61,5 +61,5 @@ private:
 	int channel_c{};
 	int opusError{};
 
-	Client* m_client{ nullptr };
+	ClientReceiver* m_client{ nullptr };
 };

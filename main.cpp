@@ -12,7 +12,7 @@
 #include <mutex>
 
 
-void recorder(Server* server) {
+void recorder(ClientSender* server) {
     auto rec{ Recorder(server,1,constants::BITRATE) };
 
     rec.initializeStream();
@@ -23,7 +23,7 @@ void recorder(Server* server) {
     rec.closeStream();
 }
 
-void receiver(Client* client) {
+void receiver(ClientReceiver* client) {
     auto plr{ Player(client,1) };
 
     plr.initializeStream();
@@ -42,9 +42,9 @@ int main() {
     err = Pa_Initialize();
     helpers::checkError(err);
 
-    auto client{ Client(io_context) };
+    auto client{ ClientReceiver(io_context) };
 
-    auto server{ Server(io_context) };
+    auto server{ ClientSender(io_context) };
     
 
    
