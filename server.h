@@ -12,6 +12,8 @@ struct Packet {
 	unsigned char* buf;
 	uint64_t timestamp;
 	int bytes;
+	uint64_t info[2]{ 0,0 };
+	udp::endpoint remote_endpoint;
 };
 
 class Server {
@@ -24,18 +26,16 @@ public:
 private:
 	void start_receiving() {
 		auto new_packet = std::make_shared<Packet>();
-		udp::endpoint remote_endpoint;
 		std::cout << "Q sz: " << packet_q.size() << "\n";
-
 		m_socket.async_receive_from(
-			boost::asio::buffer(info,sizeof(info)), remote_endpoint,
+			boost::asio::buffer(new_packet->info,sizeof(new_packet->info)), new_packet->remote_endpoint,
 			[&,new_packet](const boost::system::error_code& ec, std::size_t l) {
 				if (ec) {
 					std::cout << ec.what() << "\n";
 					exit(EXIT_FAILURE);
 				}
-				new_packet->bytes = info[0];
-				new_packet->timestamp = info[1];
+				new_packet->bytes = new_packet->info[0];
+				new_packet->timestamp = new_packet->info[1];
 				new_packet->buf = rb.getChunk();
 				//m_remote_endpoint_set.insert(remote_endpoint);
 				receive_data(new_packet);
@@ -55,26 +55,24 @@ private:
 				}
 				std::cout << "Received: " << l << " buf, timestamp: " << packet->timestamp << "\n";
 				/*
-				while (!packet_q.empty() && packet->timestamp - packet_q.front()->timestamp > 20) {
-					//std::cout << "Popped one\n";
-					packets_to_process.push_back(packet_q.front());
-					packet_q.pop_front();
-				}
-				packet_q.push_back(packet);
-				control_send();
-				*/
-
+				
 				if (packet_q.empty()) {
 					packet_q.push_back(packet);
 					start_receiving();
 				}
-				else{
+				else if(packet->timestamp - packet_q.front()->timestamp < 20){
+					std::cout << " I need to process stuff " << packet->timestamp - packet_q.front()->timestamp << "\n";
+					start_receiving();
+				}
+				else {
 					packet_q.push_back(packet);
 					auto p = packet_q.front();
+					std::cout << packet->timestamp - p->timestamp << "\n";
 					packet_q.pop_front();
 					start_sending(p);
 				}
-				//start_sending(packet);
+				*/
+				start_sending(packet);
 			}
 		);
 	}
@@ -116,7 +114,6 @@ private:
 			}
 		);
 	}
-	uint64_t info[2]{ 0,0 };
 	udp::endpoint m_remote_endpoint;
 	RingBuffer<unsigned char, 30, 512> rb;
 	std::deque<std::shared_ptr<Packet>> packet_q;

@@ -38,10 +38,11 @@ void receiver(ClientReceiver* client) {
 int main() {
     PaError err = paNoError;
     boost::asio::io_context io_context;
-
+    auto work_guard = boost::asio::make_work_guard(io_context);
     err = Pa_Initialize();
     helpers::checkError(err);
 
+    helpers::getAndPrintAllDevices();
     auto client{ ClientReceiver(io_context) };
 
     auto server{ ClientSender(io_context) };
@@ -59,9 +60,8 @@ int main() {
         }
         
     });
-
-    std::thread t(receiver,&client);
     
+    std::thread t(receiver,&client);
     recorder(&server);
     t.join();
     io_thread.join();

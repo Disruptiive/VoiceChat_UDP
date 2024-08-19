@@ -68,7 +68,7 @@ private:
 
 class ClientSender {
 public:
-	ClientSender(boost::asio::io_context& io_context) : m_socket(io_context, udp::endpoint(udp::v6(), 7999)), m_buf(new unsigned char[constants::MAX_PACKET_SIZE]) {
+	ClientSender(boost::asio::io_context& io_context) : m_socket(io_context, udp::endpoint(udp::v6(), 7996)), m_buf(new unsigned char[constants::MAX_PACKET_SIZE]) {
 		udp::resolver resolver(io_context);
 		m_remote_endpoint = *resolver.resolve(udp::v6(), "", "fredo").begin();
 		std::cout << m_remote_endpoint.port() << "\n";
@@ -83,6 +83,7 @@ public:
 	}
 
 	void send_bytes() {
+		std::cout << "Will send\n";
 		m_socket.async_send_to(
 			boost::asio::buffer(m_bytes, sizeof(m_bytes)), m_remote_endpoint,
 			[&](const boost::system::error_code& ec, std::size_t l) {
@@ -90,7 +91,7 @@ public:
 					std::cout << ec.what() << "\n";
 					exit(EXIT_FAILURE);
 				}
-				std::cout << "Sent L: " << l << "\n";
+				std::cout << "tf \n";
 				send_buffer(ec, l);
 			}
 		);
