@@ -18,7 +18,7 @@ find_package(portaudio CONFIG REQUIRED)
 find_package(opus CONFIG REQUIRED)
 find_package(Boost REQUIRED)
 
-add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h" "client.h" "client.cpp" "server.h" "RingBuffer.h")
+add_executable (AudioGawd "main.cpp" "constants.h" "main.cpp" "recorder.cpp" "recorder.h" "helpers.h" "helpers.cpp" "player.h" "player.cpp" "sharedmemory.h" "client.h"  "server.h" "RingBuffer.h")
 add_executable (ServerTest "servertest.cpp" "server.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

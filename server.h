@@ -11,14 +11,14 @@ using boost::asio::ip::udp;
 struct Packet {
 	unsigned char* buf;
 	uint64_t timestamp;
-	int bytes;
+	uint64_t bytes;
 	uint64_t info[2]{ 0,0 };
 	udp::endpoint remote_endpoint;
 };
 
 class Server {
 public:
-	Server(boost::asio::io_context& io_context) : rb(RingBuffer<unsigned char, 30, 512>()), m_socket(io_context, udp::endpoint(udp::v6(), 6000)) {
+	Server(boost::asio::io_context& io_context) : rb(RingBuffer<unsigned char, 500, 512>()), m_socket(io_context, udp::endpoint(udp::v6(), 6000)) {
 		udp::resolver resolver(io_context);
 		m_remote_endpoint = *resolver.resolve(udp::v6(), "", "fredo-chat").begin();
 		start_receiving();
@@ -28,8 +28,8 @@ private:
 		auto new_packet = std::make_shared<Packet>();
 		std::cout << "Q sz: " << packet_q.size() << "\n";
 		m_socket.async_receive_from(
-			boost::asio::buffer(new_packet->info,sizeof(new_packet->info)), new_packet->remote_endpoint,
-			[&,new_packet](const boost::system::error_code& ec, std::size_t l) {
+			boost::asio::buffer(new_packet->info, sizeof(new_packet->info)), new_packet->remote_endpoint,
+			[&, new_packet](const boost::system::error_code& ec, std::size_t l) {
 				if (ec) {
 					std::cout << ec.what() << "\n";
 					exit(EXIT_FAILURE);
@@ -54,24 +54,7 @@ private:
 					exit(EXIT_FAILURE);
 				}
 				std::cout << "Received: " << l << " buf, timestamp: " << packet->timestamp << "\n";
-				/*
-				
-				if (packet_q.empty()) {
-					packet_q.push_back(packet);
-					start_receiving();
-				}
-				else if(packet->timestamp - packet_q.front()->timestamp < 20){
-					std::cout << " I need to process stuff " << packet->timestamp - packet_q.front()->timestamp << "\n";
-					start_receiving();
-				}
-				else {
-					packet_q.push_back(packet);
-					auto p = packet_q.front();
-					std::cout << packet->timestamp - p->timestamp << "\n";
-					packet_q.pop_front();
-					start_sending(p);
-				}
-				*/
+
 				start_sending(packet);
 			}
 		);
@@ -88,13 +71,13 @@ private:
 
 	void start_sending(std::shared_ptr<Packet> pkt) {
 		m_socket.async_send_to(
-			boost::asio::buffer(&(pkt->bytes), sizeof(pkt->bytes)), m_remote_endpoint,
-			[&,pkt](const boost::system::error_code& ec, std::size_t l) {
+			boost::asio::buffer(pkt->info, sizeof(pkt->info)), m_remote_endpoint,
+			[&, pkt](const boost::system::error_code& ec, std::size_t l) {
 				if (ec) {
 					std::cout << ec.what() << "\n";
 					exit(EXIT_FAILURE);
 				}
-				
+
 				send_buffer(pkt);
 			}
 		);
@@ -115,7 +98,7 @@ private:
 		);
 	}
 	udp::endpoint m_remote_endpoint;
-	RingBuffer<unsigned char, 30, 512> rb;
+	RingBuffer<unsigned char, 500, 512> rb;
 	std::deque<std::shared_ptr<Packet>> packet_q;
 	udp::socket m_socket;
 	std::set<udp::endpoint> m_remote_endpoint_set;
