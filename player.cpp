@@ -1,7 +1,7 @@
 #include <iostream>
-#include "player.h"
-#include "constants.h"
-#include "helpers.h"
+#include "player.hpp"
+#include "constants.hpp"
+#include "helpers.hpp"
 
 
 int Player::paPlayCallBack(

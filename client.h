@@ -3,8 +3,8 @@
 #include <iostream>
 #include <chrono>
 #include <queue>
-#include "constants.h"
-#include "RingBuffer.h"
+#include "constants.hpp"
+#include "ringbuffer.hpp"
 
 using boost::asio::ip::udp;
 

@@ -3,8 +3,8 @@
 #include <iostream>
 #include <deque>
 #include <set>
-#include "RingBuffer.h"
-#include "constants.h"
+#include "ringbuffer.hpp"
+#include "constants.hpp"
 
 using boost::asio::ip::udp;
 

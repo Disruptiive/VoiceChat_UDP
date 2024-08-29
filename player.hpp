@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
 #include "client.h"
-#include "constants.h"
-#include "helpers.h"
-#include "sharedmemory.h"
+#include "constants.hpp"
+#include "helpers.hpp"
+#include "sharedmemory.hpp"
 #include <opus/opus.h>
 #include <portaudio.h>
 

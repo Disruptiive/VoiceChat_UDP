@@ -1,14 +1,14 @@
 #include <iostream>
 #include <boost/asio.hpp>
-#include "server.h"
+#include "server.hpp"
 #include "client.h"
 #include <portaudio.h>
 #include <opus/opus.h>
-#include "constants.h"
-#include "recorder.h"
-#include "player.h"
-#include "sharedmemory.h"
-#include "helpers.h"
+#include "constants.hpp"
+#include "recorder.hpp"
+#include "player.hpp"
+#include "sharedmemory.hpp"
+#include "helpers.hpp"
 #include <mutex>
 
 

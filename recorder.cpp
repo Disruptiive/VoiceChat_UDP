@@ -1,7 +1,7 @@
 #include <iostream>
-#include "recorder.h"
-#include "constants.h"
-#include "helpers.h"
+#include "recorder.hpp"
+#include "constants.hpp"
+#include "helpers.hpp"
 
 
 int Recorder::paRecordCallBack(
