@@ -6,4 +6,6 @@ namespace constants {
     constexpr int SECONDS{ 10 };
     constexpr int MAX_PACKET_SIZE{ 4000 };
     constexpr int BITRATE{ 12000 };
+
+    constexpr int DUMMY_NUM{ 300 };
 }

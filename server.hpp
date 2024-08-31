@@ -8,101 +8,96 @@
 
 using boost::asio::ip::udp;
 
-struct Packet {
-	unsigned char* buf;
-	uint64_t timestamp;
-	uint64_t bytes;
-	uint64_t info[2]{ 0,0 };
-	udp::endpoint remote_endpoint;
+struct PacketInfo {
+    std::vector<unsigned char> buf;
+    uint64_t timestamp{};
+    uint64_t bytes{};
 };
 
 class Server {
 public:
-	Server(boost::asio::io_context& io_context) : rb(RingBuffer<unsigned char, 500, 512>()), m_socket(io_context, udp::endpoint(udp::v6(), 6000)) {
-		udp::resolver resolver(io_context);
-		m_remote_endpoint = *resolver.resolve(udp::v6(), "", "fredo-chat").begin();
-		start_receiving();
-	}
+    Server(boost::asio::io_context& io_context)
+        : m_socket(io_context, udp::endpoint(udp::v4(), 6000)), m_strand(io_context) {
+        udp::resolver resolver(io_context);
+        my_favourite_ever = *resolver.resolve(udp::v4(), "", "fredo-chat").begin();
+        start_receiving();
+    }
+
 private:
-	void start_receiving() {
-		auto new_packet = std::make_shared<Packet>();
-		std::cout << "Q sz: " << packet_q.size() << "\n";
-		m_socket.async_receive_from(
-			boost::asio::buffer(new_packet->info, sizeof(new_packet->info)), new_packet->remote_endpoint,
-			[&, new_packet](const boost::system::error_code& ec, std::size_t l) {
-				if (ec) {
-					std::cout << ec.what() << "\n";
-					exit(EXIT_FAILURE);
-				}
-				new_packet->bytes = new_packet->info[0];
-				new_packet->timestamp = new_packet->info[1];
-				new_packet->buf = rb.getChunk();
-				//m_remote_endpoint_set.insert(remote_endpoint);
-				receive_data(new_packet);
+    static constexpr size_t MAX_PACKET_SIZE = 65507; // Maximum UDP packet size
+    /*
+    struct ClientContext {
+        std::vector<unsigned char> buffer;
+        uint64_t expected_sequence;
+        // Add more client-specific data as needed
+    };
+    
+    std::map<udp::endpoint, ClientContext> m_clients;
+    */
+    void start_receiving() {
+        auto buffer = std::make_shared<std::vector<unsigned char>>(constants::DUMMY_NUM);
+        auto endpoint = std::make_shared<udp::endpoint>();
 
-			}
-		);
-	}
+        m_socket.async_receive_from(
+            boost::asio::buffer(*buffer),
+            *endpoint,
+            boost::asio::bind_executor(m_strand,
+                [this, buffer, endpoint](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+                    if (!ec) {
+                        handle_receive(buffer, bytes_transferred, *endpoint);
+                    }
+                    else {
+                        handle_error(ec, "receive");
+                        start_receiving(); // Start receiving next packet immediately
+                    }
+                }
+            )
+        );
+    }
 
-	void receive_data(std::shared_ptr<Packet> packet) {
-		udp::endpoint remote_endpoint;
-		m_socket.async_receive_from(
-			boost::asio::buffer(packet->buf, packet->bytes), remote_endpoint,
-			[&, packet](const boost::system::error_code& ec, std::size_t l) {
-				if (ec) {
-					std::cout << ec.what() << "\n";
-					exit(EXIT_FAILURE);
-				}
-				std::cout << "Received: " << l << " buf, timestamp: " << packet->timestamp << "\n";
+    void handle_receive(std::shared_ptr<std::vector<unsigned char>> buffer,
+        std::size_t bytes_transferred,
+        const udp::endpoint& sender_endpoint) {
+        if (bytes_transferred <= sizeof(uint64_t) * 2) { // Minimum packet size (sequence, timestamp, data size)
+            std::cout << "Got: " << bytes_transferred << " .Received incomplete packet\n";
+            return;
+        }
 
-				start_sending(packet);
-			}
-		);
-	}
+        auto packet = std::make_shared<PacketInfo>();
 
-	void control_send() {
-		int sz{ static_cast<int> (packets_to_process.size()) };
-		for (auto p : packets_to_process) {
-			start_sending(p);
-		}
-		rb.returnChunks(sz);
-		start_receiving();
-	}
+        std::memcpy(&(packet->bytes), buffer->data(), sizeof(uint64_t));
+        std::memcpy(&(packet->timestamp), buffer->data() + sizeof(uint64_t), sizeof(uint64_t));
+        if (packet->bytes >= 300) {
+            std::cout << "Data size mismatch.\n";
+            return;
+        }
+        std::cout << "Received: " << packet->bytes << " with timestamp: " << packet->timestamp << "\n";
 
-	void start_sending(std::shared_ptr<Packet> pkt) {
-		m_socket.async_send_to(
-			boost::asio::buffer(pkt->info, sizeof(pkt->info)), m_remote_endpoint,
-			[&, pkt](const boost::system::error_code& ec, std::size_t l) {
-				if (ec) {
-					std::cout << ec.what() << "\n";
-					exit(EXIT_FAILURE);
-				}
+        start_sending(buffer,bytes_transferred, my_favourite_ever);
+    }
 
-				send_buffer(pkt);
-			}
-		);
-	}
+    void start_sending(std::shared_ptr<std::vector<unsigned char>> buffer, std::size_t bytes_to_send, const udp::endpoint& target_endpoint) {
+        m_socket.async_send_to(
+            boost::asio::buffer(*buffer, bytes_to_send),
+            target_endpoint,
+            boost::asio::bind_executor(m_strand,
+                [this,buffer](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+                    std::cout << "Sent: " << bytes_transferred << " bytes.\n";
+                    if (ec) {
+                        handle_error(ec, "send");
+                    }
+                    start_receiving();
+                }
+            )
+        );
+    }
 
-	void send_buffer(std::shared_ptr<Packet> pkt) {
-		m_socket.async_send_to(
-			boost::asio::buffer(pkt->buf, pkt->bytes), m_remote_endpoint,
-			[&](const boost::system::error_code& ec, std::size_t l) {
-				if (ec) {
-					std::cout << ec.what() << "\n";
-					exit(EXIT_FAILURE);
-				}
-				std::cout << " Sent bytes : " << l << "\n";
-				rb.returnChunks(1);
-				start_receiving();
-			}
-		);
-	}
-	udp::endpoint m_remote_endpoint;
-	RingBuffer<unsigned char, 500, 512> rb;
-	std::deque<std::shared_ptr<Packet>> packet_q;
-	udp::socket m_socket;
-	std::set<udp::endpoint> m_remote_endpoint_set;
-	std::vector<std::shared_ptr<Packet>> packets_to_process;
+    void handle_error(const boost::system::error_code& ec, const std::string& operation) {
+        std::cout << "Error during " << operation << ": " << ec.message() << "\n";
+    }
+
+
+    udp::endpoint my_favourite_ever;
+    boost::asio::io_context::strand m_strand;
+    udp::socket m_socket;
 };
-
-

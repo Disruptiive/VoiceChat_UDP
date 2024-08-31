@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include "server.hpp"
-#include "client.h"
+#include "client.hpp"
 #include <portaudio.h>
 #include <opus/opus.h>
 #include "constants.hpp"

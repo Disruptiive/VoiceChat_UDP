@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include "client.h"
+#include "client.hpp"
 #include "constants.hpp"
 #include "helpers.hpp"
 #include "sharedmemory.hpp"

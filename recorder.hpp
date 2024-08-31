@@ -1,7 +1,7 @@
 #pragma once
 #include "sharedmemory.hpp"
 #include "server.hpp"
-#include "client.h"
+#include "client.hpp"
 #include "helpers.hpp"
 #include "constants.hpp"
 #include <opus/opus.h>
