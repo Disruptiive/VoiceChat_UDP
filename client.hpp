@@ -56,27 +56,48 @@ public:
         );
     }
 
-    int getData(unsigned char* out) {
+    std::vector<std::shared_ptr<UnpackedPacket>> getData() {
         std::unique_lock<std::mutex> lk(mtx);
-        cv.wait(lk, [this] { return !packet_q.empty(); });
-       
+        //cv.wait(lk, [this] { return !packet_q.empty(); });
+        cv.wait(lk, [this] { return packet_q.size() >= 2; });
+        std::vector<std::shared_ptr<UnpackedPacket>> v;
+
         auto pkt = packet_q.front();
         packet_q.pop();
 
-        if (packet_q.size() > 100) {
-            while (packet_q.size() > 50) packet_q.pop();
-        }
+        v.push_back(pkt);
+        
+        pkt = packet_q.front();
+        packet_q.pop();
 
-        std::memcpy(out, pkt->buf.data(), pkt->bytes);
-        return pkt->bytes;
+        v.push_back(pkt);
+        //while (!packet_q.empty() && (v.empty() || (packet_q.top()->timestamp - v.front()->timestamp) < delay)) {
+            
+            /*
+            pkt = packet_q.front();
+            packet_q.pop();
+
+            v.push_back(pkt);
+        }
+            */
+        
+        return std::move(v);
     }
 
 private:
+    const int delay{ constants::SAMPLERATE / constants::FRAMES_PER_BUFFER };
     std::mutex mtx;
     std::condition_variable cv;
     udp::socket m_socket;
     udp::endpoint m_remote_endpoint;
-    std::queue<std::shared_ptr<UnpackedPacket>> packet_q;
+    std::queue < std::shared_ptr < UnpackedPacket>> packet_q;
+    /*
+    std::priority_queue <
+        std::shared_ptr<UnpackedPacket>,
+        std::vector<std::shared_ptr<UnpackedPacket>>,
+        decltype([](const auto& p1, const auto& p2) { return p1->timestamp > p2->timestamp; })
+    > packet_q;
+    */
 };
 
 
@@ -90,7 +111,7 @@ public:
 
     void send_message(int bytes, unsigned char* buf) {
         auto pkt = std::make_shared<SendingPacket>();
-        const auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::system_clock::now();
         uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         uint64_t uint_bytes = static_cast<uint64_t> (bytes);
         pkt->resize(sizeof(unsigned char) * bytes+sizeof(uint64_t)*2);
