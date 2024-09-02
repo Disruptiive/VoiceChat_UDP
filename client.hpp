@@ -62,7 +62,7 @@ public:
         std::vector<std::shared_ptr<UnpackedPacket>> v;
 
 
-        while (!packet_q.empty() && (v.empty() || (packet_q.top()->timestamp - v.front()->timestamp) < delay)) {
+        while (!packet_q.empty() && (v.empty() || (packet_q.top()->timestamp - v.front()->timestamp) <= delay)) {
             
             
             auto pkt = packet_q.top();

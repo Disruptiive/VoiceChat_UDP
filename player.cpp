@@ -29,38 +29,18 @@ int Player::paPlayCallBack(
             }
 
         }
-        if (max_amplitude > 1.0f) {
-            float scaling_factor = 0.99f / max_amplitude;  // Leave a small headroom
-            for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
-                plr->data[j] *= scaling_factor;
-            }
-        }
-        else {
-            // If no normalization is needed, we still need to average the samples
-            for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
-                plr->data[j] /= cnt;
-            }
-        }
+        
 
-        const float threshold = 0.95f;
-        const float knee = 0.05f;
         for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
-            float x = std::abs(plr->data[j]);
-            if (x > threshold - knee) {
-                if (x > threshold + knee) {
-                    plr->data[j] *= threshold / x;
-                }
-                else {
-                    float t = (x - (threshold - knee)) / (2 * knee);
-                    float gain = 1.0f - t * t * (1.0f - (threshold / x));
-                    plr->data[j] *= gain;
-                }
-            }
+            plr->data[j] /= cnt;
         }
+        
 
 
+
+        
         std::memcpy(out, plr->data, constants::FRAMES_PER_BUFFER * sizeof(float));
-        std::cout << "Mixed " << cnt << " packets" << std::endl;
+        std::cout << "Mixed " << cnt << " packets" << "Max amplitude: " << max_amplitude << "\n";
     }
 
     return 0;
@@ -88,7 +68,7 @@ void Player::initializeStream(int device_id)
         &outputParameters,
         constants::SAMPLERATE,
         constants::FRAMES_PER_BUFFER,
-        paNoFlag,
+        paClipOff,
         paPlayCallBack,
         (void*) this
     );
