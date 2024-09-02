@@ -17,19 +17,48 @@ int Player::paPlayCallBack(
     }
     else {
         opus_decode_float(plr->decoder, packets.front()->buf.data(), packets.front()->bytes, plr->data, constants::FRAMES_PER_BUFFER, 0);
+
+        float max_amplitude{ 0.0f };
         int cnt{ 1 };
         for (size_t i = 1; i < packets.size(); ++i) {
             opus_decode_float(plr->decoder, packets[i]->buf.data(), packets[i]->bytes, plr->tmp_buf, constants::FRAMES_PER_BUFFER, 0);
             ++cnt;
-            // Mix using the improved mixing formula
             for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
                 plr->data[j] += plr->tmp_buf[j];
+                max_amplitude = std::max(max_amplitude, std::abs(plr->data[j]));
             }
 
         }
-        for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
-            plr->data[j] /= cnt;
+        if (max_amplitude > 1.0f) {
+            float scaling_factor = 0.99f / max_amplitude;  // Leave a small headroom
+            for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
+                plr->data[j] *= scaling_factor;
+            }
         }
+        else {
+            // If no normalization is needed, we still need to average the samples
+            for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
+                plr->data[j] /= cnt;
+            }
+        }
+
+        const float threshold = 0.95f;
+        const float knee = 0.05f;
+        for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
+            float x = std::abs(plr->data[j]);
+            if (x > threshold - knee) {
+                if (x > threshold + knee) {
+                    plr->data[j] *= threshold / x;
+                }
+                else {
+                    float t = (x - (threshold - knee)) / (2 * knee);
+                    float gain = 1.0f - t * t * (1.0f - (threshold / x));
+                    plr->data[j] *= gain;
+                }
+            }
+        }
+
+
         std::memcpy(out, plr->data, constants::FRAMES_PER_BUFFER * sizeof(float));
         std::cout << "Mixed " << cnt << " packets" << std::endl;
     }
