@@ -58,28 +58,19 @@ public:
 
     std::vector<std::shared_ptr<UnpackedPacket>> getData() {
         std::unique_lock<std::mutex> lk(mtx);
-        //cv.wait(lk, [this] { return !packet_q.empty(); });
-        cv.wait(lk, [this] { return packet_q.size() >= 2; });
+        cv.wait(lk, [this] { return !packet_q.empty(); });
         std::vector<std::shared_ptr<UnpackedPacket>> v;
 
-        auto pkt = packet_q.front();
-        packet_q.pop();
 
-        v.push_back(pkt);
-        
-        pkt = packet_q.front();
-        packet_q.pop();
-
-        v.push_back(pkt);
-        //while (!packet_q.empty() && (v.empty() || (packet_q.top()->timestamp - v.front()->timestamp) < delay)) {
+        while (!packet_q.empty() && (v.empty() || (packet_q.top()->timestamp - v.front()->timestamp) < delay)) {
             
-            /*
-            pkt = packet_q.front();
+            
+            auto pkt = packet_q.top();
             packet_q.pop();
 
             v.push_back(pkt);
         }
-            */
+        
         
         return std::move(v);
     }
@@ -90,14 +81,13 @@ private:
     std::condition_variable cv;
     udp::socket m_socket;
     udp::endpoint m_remote_endpoint;
-    std::queue < std::shared_ptr < UnpackedPacket>> packet_q;
-    /*
+
     std::priority_queue <
         std::shared_ptr<UnpackedPacket>,
         std::vector<std::shared_ptr<UnpackedPacket>>,
         decltype([](const auto& p1, const auto& p2) { return p1->timestamp > p2->timestamp; })
     > packet_q;
-    */
+    
 };
 
 

@@ -11,10 +11,28 @@ int Player::paPlayCallBack(
 
     Player* plr = (Player*)userData;
     float* out = (float*)outputBuffer;
+    auto packets = plr->m_client->getData();
+    if (packets.size() == 1) {
+        opus_decode_float(plr->decoder, packets.front()->buf.data(), packets.front()->bytes, out, constants::FRAMES_PER_BUFFER, 0);
+    }
+    else {
+        opus_decode_float(plr->decoder, packets.front()->buf.data(), packets.front()->bytes, plr->data, constants::FRAMES_PER_BUFFER, 0);
+        int cnt{ 1 };
+        for (size_t i = 1; i < packets.size(); ++i) {
+            opus_decode_float(plr->decoder, packets[i]->buf.data(), packets[i]->bytes, plr->tmp_buf, constants::FRAMES_PER_BUFFER, 0);
+            ++cnt;
+            // Mix using the improved mixing formula
+            for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
+                plr->data[j] += plr->tmp_buf[j];
+            }
 
-    int bytes = plr->m_client->getData(plr->data);
-    opus_decode_float(plr->decoder, plr->data, bytes, out, constants::FRAMES_PER_BUFFER, 0);
-
+        }
+        for (int j = 0; j < constants::FRAMES_PER_BUFFER; ++j) {
+            plr->data[j] /= cnt;
+        }
+        std::memcpy(out, plr->data, constants::FRAMES_PER_BUFFER * sizeof(float));
+        std::cout << "Mixed " << cnt << " packets" << std::endl;
+    }
 
     return 0;
 }
